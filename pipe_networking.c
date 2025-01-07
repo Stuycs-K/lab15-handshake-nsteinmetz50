@@ -25,6 +25,7 @@ int server_setup() {
   if (piper == -1){
     err();
   }
+  from_client = piper;
   return from_client;
 }
 
@@ -38,7 +39,7 @@ int server_setup() {
   returns the file descriptor for the upstream pipe (see server setup).
   =========================*/
 int server_handshake(int *to_client) {
-  int from_client;
+  int from_client = server_setup();
   return from_client;
 }
 
