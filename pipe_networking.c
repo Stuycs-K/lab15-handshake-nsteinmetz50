@@ -72,9 +72,8 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-  int from_server;
-  int fds[2];
-  pipe(fds);
+  char * priv = getpid();
+  int privat = mkfifo(priv);
 
   int fdw;
   fdw = open(piper, O_WRONLY);
