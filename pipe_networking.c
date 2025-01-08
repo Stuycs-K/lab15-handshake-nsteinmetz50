@@ -1,4 +1,16 @@
 #include "pipe_networking.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
+
+#define READ 0
+#define WRITE 1
 
 int err(){
   printf("errno %d\n",errno);
@@ -23,6 +35,12 @@ int server_setup() {
   unlink(WKP);
   piper = mkfifo(WKP, 0644);
   if (piper == -1){
+    err();
+  }
+  int fdw;
+  fdw = open(piper, O_RDONLY);
+  if (fdw < 0) {
+    perror("not able to read wkp ");
     err();
   }
   from_client = piper;
@@ -55,6 +73,16 @@ int server_handshake(int *to_client) {
   =========================*/
 int client_handshake(int *to_server) {
   int from_server;
+  int fds[2];
+  pipe(fds);
+
+  int fdw;
+  fdw = open(piper, O_WRONLY);
+  if (fdw == -1){
+    perror("couldn't write to wkp");
+    err();
+  }
+  int w = write(fdw, fds, sizeof(fds));
   return from_server;
 }
 
