@@ -31,6 +31,8 @@ int err(){
   =========================*/
 int server_setup() {
   int from_client = 0;
+  char * WKP = "WKP";
+  char line[256];
   int piper;
   unlink(WKP);
   piper = mkfifo(WKP, 0644);
@@ -43,7 +45,12 @@ int server_setup() {
     perror("not able to read wkp ");
     err();
   }
-  from_client = piper;
+  int r = read (WKP, line, sizeof(line));
+  if (r == -1){
+    err();
+  }
+  from_client = r;
+  //remove WKP
   return from_client;
 }
 
@@ -82,6 +89,8 @@ int client_handshake(int *to_server) {
     err();
   }
   int w = write(fdw, fds, sizeof(fds));
+  int rr;
+  rr = open(priv, O_RDONLY);
   return from_server;
 }
 
