@@ -18,6 +18,18 @@ int err(){
   exit(1);
 }
 
+int randomNum(){
+  int x;
+  int bytes;
+  int r_file = open("/dev/random", O_RDONLY, 0);
+  if (r_file == -1)err();
+  bytes = read(r_file, &x, 4);
+  if (bytes == -1){
+      err();
+  }
+  return x;
+}
+
 
 //UPSTREAM = to the server / from the client
 //DOWNSTREAM = to the client / from the server
@@ -65,6 +77,20 @@ int server_setup() {
   =========================*/
 int server_handshake(int *to_client) {
   int from_client = server_setup();
+  int fdw = open(from_client, O_WRONLY);
+  if (fdw == -1){
+    err();
+  }
+  int num = randomNum();
+  int w = write(fdw, num, sizeof(num));
+  if (w == -1){
+    err();
+  }
+
+  int r = read(fdw, num, sizeof(num));
+  if (r == -1){
+    err();
+  }
   return from_client;
 }
 
@@ -79,7 +105,9 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-  char * priv = getpid();
+  char priv[50]; 
+  int num = getpid(); 
+  sprintf(priv, "%d", num); 
   int privat = mkfifo(priv);
 
   int fdw;
@@ -88,9 +116,23 @@ int client_handshake(int *to_server) {
     perror("couldn't write to wkp");
     err();
   }
-  int w = write(fdw, fds, sizeof(fds));
+  int w = write(fdw, priv, sizeof(priv));
+  if (w == -1){
+    err();
+  }
   int rr;
   rr = open(priv, O_RDONLY);
+  //delete pp
+  int signal;
+  int reading = read(rr, signal, sizeof(signal));
+  if (reading == -1){
+    err();
+  }
+  signal--;
+  int w = write(fdw, signal, sizeof(signal));
+  if (w == -1){
+    err();
+  }
   return from_server;
 }
 
