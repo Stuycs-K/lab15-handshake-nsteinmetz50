@@ -105,10 +105,14 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
+  char * piper = "WKP";
   char priv[50]; 
   int num = getpid(); 
   sprintf(priv, "%d", num); 
-  int privat = mkfifo(priv);
+  int privat = mkfifo(priv); //
+  if (privat == -1){
+    err();
+  }
 
   int fdw;
   fdw = open(piper, O_WRONLY);
@@ -122,7 +126,7 @@ int client_handshake(int *to_server) {
   }
   int rr;
   rr = open(priv, O_RDONLY);
-  //delete pp
+  remove(priv);
   int signal;
   int reading = read(rr, signal, sizeof(signal));
   if (reading == -1){
