@@ -62,7 +62,7 @@ int server_setup() {
     err();
   }
   from_client = r;
-  //remove WKP
+  remove(WKP);
   return from_client;
 }
 
@@ -128,7 +128,7 @@ int client_handshake(int *to_server) {
   if (reading == -1){
     err();
   }
-  signal--;
+  signal++;
   int w = write(fdw, signal, sizeof(signal));
   if (w == -1){
     err();
