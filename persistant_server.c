@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <signal.h>
 
 #define READ 0
 #define WRITE 1
@@ -89,6 +90,7 @@ int server_setup() {
   returns the file descriptor for the upstream pipe (see server setup).
   =========================*/
 int server_handshake(int *to_client) {
+    int from_client = 0;
     while (1){
         signal(SIGINT, sighandler);
         char priv[50];
@@ -97,7 +99,7 @@ int server_handshake(int *to_client) {
         if (fdw == -1){
             err();
         }*/
-        int from_client = fdw;
+        from_client = fdw;
         int r = read(fdw, priv, sizeof(priv)); //read syn
         if (r == -1){
             err();
@@ -129,7 +131,7 @@ int server_handshake(int *to_client) {
             }
             sleep(1);
         }
-        close(*from_client);
+        close(from_client);
         close(*to_client);
     }
   return from_client;
