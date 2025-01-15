@@ -12,6 +12,12 @@
 #define READ 0
 #define WRITE 1
 
+static void sighandler(int signo) {
+  if ( signo == SIGINT ){
+    unlink(WKP);
+  }
+}
+
 int err(){
   printf("errno %d\n",errno);
   printf("%s\n",strerror(errno));
@@ -83,45 +89,49 @@ int server_setup() {
   returns the file descriptor for the upstream pipe (see server setup).
   =========================*/
 int server_handshake(int *to_client) {
-  char priv[50];
-  int fdw = server_setup();
-  /*int fdw = open(from_client, O_WRONLY);
-  if (fdw == -1){
-    err();
-  }*/
-  int r = read(fdw, priv, sizeof(priv)); //read syn
-  if (r == -1){
-    err();
-  }
-  printf("Client PID, received by server: %s\n", priv);
-  int down;
-  down = open(priv, O_WRONLY); //open pp
-  if (down == -1){
-    err();
-  }
-  *to_client = down;
-  int num = randomNum();
-  printf("Intended SYN: %d\n", num);
-  int w = write(down, &num, sizeof(num)); //send syn ack
-  if (w == -1){
-    err();
-  }
-  r = read(fdw, &num, sizeof(num));
-  if (r == -1){
-    err();
-  }
-  printf("Received ack: %d\n", num);
+    while (1){
+        signal(SIGINT, sighandler);
+        char priv[50];
+        int fdw = server_setup();
+        /*int fdw = open(from_client, O_WRONLY);
+        if (fdw == -1){
+            err();
+        }*/
+        int from_client = fdw;
+        int r = read(fdw, priv, sizeof(priv)); //read syn
+        if (r == -1){
+            err();
+        }
+        printf("Client PID, received by server: %s\n", priv);
+        int down;
+        down = open(priv, O_WRONLY); //open pp
+        if (down == -1){
+            err();
+        }
+        *to_client = down;
+        int num = randomNum();
+        printf("Intended SYN: %d\n", num);
+        int w = write(down, &num, sizeof(num)); //send syn ack
+        if (w == -1){
+            err();
+        }
+        r = read(fdw, &num, sizeof(num));
+        if (r == -1){
+            err();
+        }
+        printf("Received ack: %d\n", num);
 
-  while (1){
-    num = randomHundred();
-    w = write(down, &num, sizeof(num)); //send syn ack
-    if (w == -1){
-      err();
+        while (1){
+            num = randomHundred();
+            w = write(down, &num, sizeof(num)); //send syn ack
+            if (w == -1){
+            err();
+            }
+            sleep(1);
+        }
+        close(*from_client);
+        close(*to_client);
     }
-    sleep(1);
-  }
-
-  int from_client = fdw;
   return from_client;
 }
 
