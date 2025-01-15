@@ -43,26 +43,21 @@ int randomNum(){
   =========================*/
 int server_setup() {
   int from_client = 0;
-  char * WKP = "WKP";
   char line[256];
   int piper;
   unlink(WKP);
-  piper = mkfifo(WKP, 0644);
+  piper = mkfifo(WKP, 0644); //make pipe
   if (piper == -1){
     err();
   }
   int fdw;
-  fdw = open(piper, O_RDONLY);
+  fdw = open(WKP, O_RDONLY); //open WKP
   if (fdw < 0) {
     perror("not able to read wkp ");
     err();
   }
-  int r = read (WKP, line, sizeof(line));
-  if (r == -1){
-    err();
-  }
-  from_client = r;
-  remove(WKP);
+  from_client = fdw;
+  remove(WKP); //remove
   return from_client;
 }
 
@@ -76,21 +71,35 @@ int server_setup() {
   returns the file descriptor for the upstream pipe (see server setup).
   =========================*/
 int server_handshake(int *to_client) {
-  int from_client = server_setup();
-  int fdw = open(from_client, O_WRONLY);
+  char priv[50];
+  int fdw = server_setup();
+  /*int fdw = open(from_client, O_WRONLY);
   if (fdw == -1){
     err();
-  }
-  int num = randomNum();
-  int w = write(fdw, num, sizeof(num));
-  if (w == -1){
-    err();
-  }
-
-  int r = read(fdw, num, sizeof(num));
+  }*/
+  int r = read(fdw, priv, sizeof(priv)); //read syn
   if (r == -1){
     err();
   }
+  printf("Client PID, received by server: %s\n", priv);
+  int down;
+  down = open(priv, O_WRONLY); //open pp
+  if (down == -1){
+    err();
+  }
+  *to_client = down;
+  int num = randomNum();
+  printf("Intended SYN: %d\n", num);
+  int w = write(down, &num, sizeof(num)); //send syn ack
+  if (w == -1){
+    err();
+  }
+  r = read(fdw, &num, sizeof(num));
+  if (r == -1){
+    err();
+  }
+  printf("Received ack: %d\n", num);
+  int from_client = fdw;
   return from_client;
 }
 
@@ -105,38 +114,44 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-  char * piper = "WKP";
   char priv[50]; 
   int num = getpid(); 
   sprintf(priv, "%d", num); 
-  int privat = mkfifo(priv); //
+  int privat = mkfifo(priv, 0644); //make pp
   if (privat == -1){
     err();
   }
 
   int fdw;
-  fdw = open(piper, O_WRONLY);
+  fdw = open(WKP, O_WRONLY); //open WKP
   if (fdw == -1){
     perror("couldn't write to wkp");
     err();
   }
-  int w = write(fdw, priv, sizeof(priv));
+  *to_server = fdw;
+  printf("Intended PID: %s\n", priv);
+  int w = write(fdw, priv, sizeof(priv)); //write pp to wkp
   if (w == -1){
     err();
   }
   int rr;
-  rr = open(priv, O_RDONLY);
-  remove(priv);
+  rr = open(priv, O_RDONLY); //open pp
+  if (rr == -1){
+    err();
+  }
+  remove(priv); //delete pp
   int signal;
-  int reading = read(rr, signal, sizeof(signal));
+  int reading = read(rr, &signal, sizeof(signal));
   if (reading == -1){
     err();
   }
+  printf("Received syn ack: %d\n", signal);
   signal++;
-  int w = write(fdw, signal, sizeof(signal));
+  w = write(fdw, &signal, sizeof(signal)); //ack
   if (w == -1){
     err();
   }
+  int from_server = rr;
   return from_server;
 }
 
