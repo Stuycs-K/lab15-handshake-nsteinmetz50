@@ -13,12 +13,24 @@
 #define READ 0
 #define WRITE 1
 
+int randomHundred(){
+  int x;
+  int bytes;
+  int r_file = open("/dev/random", O_RDONLY, 0);
+  if (r_file == -1)err();
+  bytes = read(r_file, &x, 4);
+  if (bytes == -1){
+      err();
+  }
+  x = abs(x) % 101;
+  return x;
+}
+
 static void sighandler(int signo) {
   if ( signo == SIGINT ){
     remove(WKP);
   }
   if (signo == SIGPIPE){
-    remove(WKP);
   }
 }
 
@@ -30,6 +42,16 @@ int main() {
 
   while (1){
     from_client = server_handshake( &to_client );
+    while (1){
+      int num;
+      int w;
+      num = randomHundred();
+      w = write(to_client, &num, sizeof(num)); //send syn ack
+      if (w <= 0){
+        break;
+      }
+      sleep(1);
+    }
     close(to_client);
     close(from_client);
   }
