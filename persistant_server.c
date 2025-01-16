@@ -15,14 +15,12 @@
 
 static void sighandler(int signo) {
   if ( signo == SIGINT ){
-    unlink(WKP);
+    remove(WKP);
   }
   if (signo == SIGPIPE){
-    int x = 0;
-    x++;
+    remove(WKP);
   }
 }
-
 
 int main() {
   int to_client;
