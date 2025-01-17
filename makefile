@@ -38,4 +38,4 @@ pipe_networking.o: pipe_networking.c pipe_networking.h
 clean:
 	rm *.o
 	rm forking
-	rm client prog
+	rm clientprog
