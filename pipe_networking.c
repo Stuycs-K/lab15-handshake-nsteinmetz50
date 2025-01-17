@@ -30,6 +30,19 @@ int randomNum(){
   return x;
 }
 
+int randomHundred(){
+  int x;
+  int bytes;
+  int r_file = open("/dev/random", O_RDONLY, 0);
+  if (r_file == -1)err();
+  bytes = read(r_file, &x, 4);
+  if (bytes == -1){
+      err();
+  }
+  x = abs(x) % 101;
+  return x;
+}
+
 //UPSTREAM = to the server / from the client
 //DOWNSTREAM = to the client / from the server
 /*=========================
@@ -153,11 +166,18 @@ int client_handshake(int *to_server) {
   }
   
   while (1){
-    reading = read(rr, &signal, sizeof(signal));
-    if (reading == -1){
+    int num = randomHundred();
+    sprintf(priv, "%d", num); 
+    printf("Client %d sending %s\n", getpid(), priv);
+    w = write(fdw, priv, sizeof(priv)); //ack
+    if (w <= 0){
       err();
     }
-    printf("New Int: %d\n", signal);
+    reading = read(rr, priv, sizeof(priv));
+    if (reading <= 0){
+      err();
+    }
+    printf("Client %d received: %s\n", getpid(), priv);
   }
   int from_server = rr;
   return from_server;
@@ -175,4 +195,31 @@ int client_handshake(int *to_server) {
 int server_connect(int from_client) {
   int to_client  = 0;
   return to_client;
+}
+
+void server_handshake_half(int *to_client, int from_client){
+  char priv[50];
+  int r = read(from_client, priv, sizeof(priv)); //read syn
+  if (r == -1){
+    err();
+  }
+  printf("Client PID, received by server: %s\n", priv);
+  int down;
+  down = open(priv, O_WRONLY); //open pp
+  if (down == -1){
+    err();
+  }
+  *to_client = down;
+  int num = randomNum();
+  printf("Intended SYN: %d\n", num);
+  int w = write(down, &num, sizeof(num)); //send syn ack
+  if (w == -1){
+    err();
+  }
+  r = read(from_client, &num, sizeof(num));
+  if (r == -1){
+    err();
+  }
+  printf("Received ack: %d\n", num);
+
 }

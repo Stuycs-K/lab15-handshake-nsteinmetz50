@@ -22,6 +22,7 @@
 #define EXIT 4
 
 int err();
+int randomHundred();
 int server_handshake(int *to_client);
 int client_handshake(int *to_server);
 
@@ -30,6 +31,7 @@ int server_connect(int from_client);
 
 //for forking server
 int server_setup();
+void server_handshake_half(int *to_client, int from_client);
 
 //multi_server
 int multi_server_setup();

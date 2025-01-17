@@ -13,19 +13,6 @@
 #define READ 0
 #define WRITE 1
 
-int randomHundred(){
-  int x;
-  int bytes;
-  int r_file = open("/dev/random", O_RDONLY, 0);
-  if (r_file == -1)err();
-  bytes = read(r_file, &x, 4);
-  if (bytes == -1){
-      err();
-  }
-  x = abs(x) % 101;
-  return x;
-}
-
 static void sighandler(int signo) {
   if ( signo == SIGINT ){
     remove(WKP);
